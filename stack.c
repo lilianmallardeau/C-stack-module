@@ -18,16 +18,25 @@ int is_stack_empty(stack s) {
   return s == NULL;
 }
 
+/* @requires: s is a valid stack and doesn't loop
+ * @assigns: creates a new stack
+ * @ensures: returns a reversed copy of s
+ */
+stack reverse_stack(stack s) {
+  stack new_stack = create_stack();
+  while (s) {
+    push(s->head, &new_stack);
+    s = s->tail;
+  }
+  return new_stack;
+}
+
 /* @requires: s is a valid stack
  * @assigns: creates a new stack and copies each element of s in the new stack, in the same order
  * @ensures: returns a copy of the stack s
  */
 stack copy_stack(stack s) {
-  stack new_stack = create_stack();
-  for (int i = 0; i < stack_len(s); i++) {
-    push_last(get_stack_elem(s, i), &new_stack);
-  }
-  return new_stack;
+  return reverse_stack(reverse_stack(s));
 }
 
 /* @requires: *s is a valid stack
@@ -41,7 +50,7 @@ void push(stack_elem e, stack* s) {
   *s = new;
 }
 
-/* @requires: *s is a valid stack
+/* @requires: *s is a valid, non empty stack
  * @assigns: modifies s
  * @ensures: removes the first element of the stack and returns it
  */
@@ -53,42 +62,58 @@ stack_elem pop(stack* s) {
   return e;
 }
 
-/* @requires: *s is a valid stack
+/* @requires: s is a valid, non empty stack
+ * @assigns: nothing
+ * @ensures: returns the first element of s
+ */
+stack_elem peek(stack s) {
+  return s->head;
+}
+
+/* @requires: *s is a valid stack and doesn't loop
  * @assigns: modifies the stack
  * @ensures: adds e at the end of *s
  */
 void push_last(stack_elem e, stack* s) {
-  insert_stack_elem(e, stack_len(*s), s);
+  if (is_stack_empty(*s)) {
+    return push(e, s);
+  }
+  stack new = (stack) malloc(sizeof(item));
+  new->head = e;
+  new->tail = NULL;
+  stack c = *s;
+  while (c->tail != NULL) {
+    c = c->tail;
+  }
+  c->tail = new;
 }
 
-/* @requires: *s is a valid stack
+/* @requires: *s is a valid, non-empty stack and doesn't loop
  * @assigns: modifies the stack
  * @ensures: removes the last element of the stack and returns it
  */
 stack_elem pop_last(stack* s) {
-  stack_elem e = get_last_stack_elem(*s);
-  remove_stack_elem(s, stack_len(*s) - 1);
+  if ((*s)->tail == NULL)
+    return pop(s);
+  stack c = *s;
+  while (c->tail->tail != NULL) {
+    c = c->tail;
+  }
+  stack_elem e = c->tail->head;
+  free(c->tail);
+  c->tail = NULL;
   return e;
 }
 
-/* @requires: *s is a valid stack, 0 <= index <= stack_len(*s)
- * @assigns: modifies the stack
- * @ensures: inserts the stack_element e at the index-th place in the stack
+/* @requires: s is a valid, non empty stack and doesn't loop
+ * @assigns: nothing
+ * @ensures: returns the last element of s
  */
-void insert_stack_elem(stack_elem e, int index, stack* s) {
-  stack cur = *s;
-  for (int i = 0; i < index - 1; i++) {
-    cur = cur->tail;
+stack_elem peek_last(stack s) {
+  while (s->tail != NULL) {
+    s = s->tail;
   }
-  item* new = (item*) malloc(sizeof(item));
-  new->head = e;
-  if (index == 0) {
-    new->tail = cur;
-    *s = new;
-  } else {
-    new->tail = cur->tail;
-    cur->tail = new;
-  }
+  return s->head;
 }
 
 /* @requires: s is a valid stack, 0 <= index < stack_len(s)
@@ -100,14 +125,6 @@ stack_elem get_stack_elem(stack s, int index) {
     s = s->tail;
   }
   return s->head;
-}
-
-/* @requires: s is a valid stack
- * @assigns: nothing
- * @ensures: returns the last element of the stack
- */
-stack_elem peek_last(stack s) {
-  return get_stack_elem(s, stack_len(s) - 1);
 }
 
 /* @requires: *s is a valid stack, 0 <= index < stack_len(*s)
@@ -122,21 +139,22 @@ void set_stack_elem(stack *s, stack_elem e, int index) {
   l->head = e;
 }
 
-/* @requires: s is a valid stack
- * @assigns: nothing
- * @ensures: returns the index of the first occurence of e in s, or -1 if e is not in s
+/* @requires: *s is a valid stack, 0 <= index <= stack_len(*s)
+ * @assigns: modifies the stack
+ * @ensures: inserts the stack_element e at the index-th place in the stack
  */
-int get_stack_elem_index(stack_elem e, stack s) {
-  if (is_stack_empty(s))
-    return -1;
-  int index = 0;
-  while (s->head != e) {
-    if (index > stack_len(s))
-      return -1;
-    index++;
-    s = s->tail;
+void insert_stack_elem(stack* s, stack_elem e, int index) {
+  if (index == 0) {
+    return push(e, s);
   }
-  return index;
+  stack cur = *s;
+  for (int i = 0; i < index - 1; i++) {
+    cur = cur->tail;
+  }
+  item* new = (item*) malloc(sizeof(item));
+  new->head = e;
+  new->tail = cur->tail;
+  cur->tail = new;
 }
 
 /* @requires: *s is a valid stack, 0 <= index < stack_len(*s)
@@ -157,6 +175,21 @@ void remove_stack_elem(stack *s, int index) {
   }
 }
 
+/* @requires: s is a valid stack and (e is in s or s doesn't loop)
+ * @assigns: nothing
+ * @ensures: returns the index of the first occurence of e in s, or -1 if e is not in s
+ */
+int seek_stack_elem(stack_elem e, stack s) {
+  if (is_stack_empty(s))
+    return -1;
+  int index = 0;
+  while (s->head != e && s->tail != NULL) {
+    s = s->tail;
+    index++;
+  }
+  return s->head == e ? index : -1;
+}
+
 /* @requires: s is a valid stack and doesn't loop
  * @assigns: nothing
  * @ensures: returns the length of s (ie. the number of elements it contains)
@@ -170,10 +203,24 @@ int stack_len(stack s) {
   return i;
 }
 
+/* @requires: *s is a valid stack and doesn't loop
+ * @assigns: frees the memory used by each item of the stack
+ * @ensures: frees the memory used by the stack
+ */
+void free_stack(stack* s) {
+  stack cur = *s;
+  while (cur != NULL) {
+    stack tmp = cur->tail;
+    free(cur);
+    cur = tmp;
+  }
+}
+
 /* @requires: s is a valid stack and doesn't loop
  * @assigns: nothing
  * @ensures: prints the stack s in the format [stack_elem1] -> [stack_elem2] -> ... -> []
  */
+#if DEFINE_PRINT_STACK_FUNCTION >= 1
 void print_stack(stack s) {
   while (s != NULL) {
     printf("[%d] -> ", s->head);
@@ -181,3 +228,4 @@ void print_stack(stack s) {
   }
   printf("[]\n");
 }
+#endif
