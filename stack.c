@@ -106,7 +106,7 @@ stack_elem get_stack_elem(stack s, int index) {
  * @assigns: nothing
  * @ensures: returns the last element of the stack
  */
-stack_elem get_last_stack_elem(stack s) {
+stack_elem peek_last(stack s) {
   return get_stack_elem(s, stack_len(s) - 1);
 }
 
