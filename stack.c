@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "stack.h"
 
 /* @requires: nothing
@@ -36,7 +37,37 @@ stack reverse_stack(stack s) {
  * @ensures: returns a copy of the stack s
  */
 stack copy_stack(stack s) {
-  return reverse_stack(reverse_stack(s));
+  if (is_stack_empty(s))
+    return create_stack();
+  stack new_stack = (stack) malloc(sizeof(item));
+  stack prev = new_stack;
+  prev->head = s->head;
+  s = s->tail;
+  while (s) {
+    stack new = (stack) malloc(sizeof(item));
+    new->head = s->head;
+    prev->tail = new;
+    prev = new;
+    s = s->tail;
+  }
+  prev->tail = NULL;
+  return new_stack;
+}
+
+/* @requires: s is a valid stack and doesn't loop
+ * @assigns: creates a new stack and pushes each element of s in it in a random order
+ * @ensures: returns a shuffled copy of the stack s
+ */
+stack shuffle_stack(stack s) {
+  s = copy_stack(s);
+  stack new = create_stack();
+  int n = stack_len(s);
+  srand(time(NULL));
+  while (!is_stack_empty(s)) {
+    push(pop_stack_elem(&s, rand() % n), &new);
+    n--;
+  }
+  return new;
 }
 
 /* @requires: *s is a valid stack
@@ -159,19 +190,21 @@ void insert_stack_elem(stack* s, stack_elem e, int index) {
 
 /* @requires: *s is a valid stack, 0 <= index < stack_len(*s)
  * @assigns: modifies the stack
- * @ensures: removes the index-th element of the stack and frees the memory previously allocated to it
+ * @ensures: removes the index-th element of the stack, frees the memory previously allocated to it and returns the element removed
  */
-void remove_stack_elem(stack *s, int index) {
+stack_elem pop_stack_elem(stack *s, int index) {
   if (index == 0) {
-    pop(s);
+    return pop(s);
   } else {
     stack cur = *s;
     for (int i = 0; i < index - 1; i++) {
       cur = cur->tail;
     }
     stack tmp = cur->tail->tail;
+    stack_elem e = cur->tail->head;
     free(cur->tail);
     cur->tail = tmp;
+    return e;
   }
 }
 

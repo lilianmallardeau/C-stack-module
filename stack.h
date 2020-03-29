@@ -45,6 +45,12 @@ stack reverse_stack(stack s);
  */
 stack copy_stack(stack s);
 
+/* @requires: s is a valid stack and doesn't loop
+ * @assigns: creates a new stack and pushes each element of s in it in a random order
+ * @ensures: returns a shuffled copy of the stack s
+ */
+stack shuffle_stack(stack s);
+
 /* @requires: *s is a valid stack
  * @assigns: modifies s
  * @ensures: adds e to the begginning of s
@@ -101,9 +107,9 @@ void insert_stack_elem(stack* s, stack_elem e, int index);
 
 /* @requires: *s is a valid stack, 0 <= index < stack_len(*s)
  * @assigns: modifies the stack
- * @ensures: removes the index-th element of the stack and frees the memory previously allocated to it
+ * @ensures: removes the index-th element of the stack, frees the memory previously allocated to it and returns the element removed
  */
-void remove_stack_elem(stack *s, int index);
+stack_elem pop_stack_elem(stack *s, int index);
 
 /* @requires: *s is a valid stack, 0 <= i1, i2 < stack_len(*s)
  * @assigns: modifies the stack
@@ -133,7 +139,9 @@ void free_stack(stack* s);
  * @assigns: nothing
  * @ensures: prints the stack s in the format [stack_elem1] -> [stack_elem2] -> ... -> []
  */
+#if DEFINE_PRINT_STACK_FUNCTION >= 1
 void print_stack(stack s);
+#endif
 
 
 #endif
