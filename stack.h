@@ -105,6 +105,12 @@ void insert_stack_elem(stack* s, stack_elem e, int index);
  */
 void remove_stack_elem(stack *s, int index);
 
+/* @requires: *s is a valid stack, 0 <= i1, i2 < stack_len(*s)
+ * @assigns: modifies the stack
+ * @ensures: switch the e1-th and the e2-th elements of the stack
+ */
+void switch_stack_elem(stack *s, int e1, int e2);
+
 /* @requires: s is a valid stack and (e is in s or s doesn't loop)
  * @assigns: nothing
  * @ensures: returns the index of the first occurence of e in s, or -1 if e is not in s

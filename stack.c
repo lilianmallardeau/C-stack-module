@@ -175,6 +175,29 @@ void remove_stack_elem(stack *s, int index) {
   }
 }
 
+/* @requires: *s is a valid stack, 0 <= i1, i2 < stack_len(*s)
+ * @assigns: modifies the stack
+ * @ensures: switch the e1-th and the e2-th elements of the stack
+ */
+void switch_stack_elem(stack *s, int e1, int e2) {
+  if (e1 == e2) return;
+  int i1 = e1 < e2 ? e1 : e2;
+  int i2 = e1 < e2 ? e2 : e1;
+  stack cur = *s;
+  int i = 0;
+  for (; i < i1; i++) {
+    cur = cur->tail;
+  }
+  stack node1 = cur;
+  for (; i < i2; i++) {
+    cur = cur->tail;
+  }
+  stack node2 = cur;
+  stack_elem elem1 = node1->head;
+  node1->head = node2->head;
+  node2->head = elem1;
+}
+
 /* @requires: s is a valid stack and (e is in s or s doesn't loop)
  * @assigns: nothing
  * @ensures: returns the index of the first occurence of e in s, or -1 if e is not in s
